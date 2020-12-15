@@ -2,35 +2,33 @@ const input = (process.argv[2] ?? '0,3,6').split(',').map(v => parseInt(v, 10));
 const max = parseInt(process.argv[3] ?? '2020', 10);
 
 const memory = new class Memory {
-    lastNumber;
-    positions = new Map();
+    input;
+    positions;
+    iterations;
 
-    constructor(input) {
+    constructor(input, iterations) {
+        this.positions = new Array(iterations);
+        this.input = input;
+        this.iterations = iterations;
+
         input.forEach((value, index) => {
-            this.registerPosition(value, index + 1);
+            this.positions[value] = index + 1;
         });
     }
 
-    registerPosition(value, position) {
-        let positions = this.getPositions(value);
-        positions.push(position);
+    run() {
+        let next = 0;
 
-        if (positions.length > 2) positions = positions.slice(positions.length - 2);
+        for (let turn = input.length + 1; turn < this.iterations; turn++) {
+            const current = next, position = this.positions[current] ?? 0;
 
-        this.lastNumber = value;
-        this.positions.set(value, positions);
+            next = position > 0 ? turn - position : 0;
+
+            this.positions[current] = turn;
+        }
+
+        return next;
     }
+}(input, max);
 
-    getPositions(value) {
-        return this.positions.has(value) ? this.positions.get(value) : [];
-    }
-}(input);
-
-for (let i = input.length + 1; i <= max; i++) {
-    const positions = memory.getPositions(memory.lastNumber);
-
-    if (positions.length < 2) memory.registerPosition(0, i);
-    else memory.registerPosition(positions[1] - positions[0], i);
-}
-
-console.log(`Number after ${max} iterations is ${memory.lastNumber}`);
+console.log(`Number after ${max} iterations is ${memory.run()}`);
